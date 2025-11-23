@@ -1,0 +1,50 @@
+import { Expose, Type } from 'class-transformer';
+import { CallStatus } from 'src/common/enums/telephony.enum';
+
+export class MarketingSourceBriefDto {
+    @Expose()
+    id!: string;
+
+    @Expose()
+    name!: string;
+
+    @Expose()
+    description?: string;
+
+    @Expose()
+    channel?: string;
+
+    @Expose()
+    campaignName?: string;
+}
+
+export class CallLogReponseDto {
+    @Expose()
+    id!: string;
+
+    /** E.164 tracking number*/
+    @Expose()
+    callerNumber!: string;
+
+    @Expose()
+    receiverNumber!: string;
+
+    @Expose()
+    status: CallStatus;
+
+    @Expose()
+    callStartedAt: Date;
+    
+    @Expose()
+    durationSeconds: number;
+
+    @Expose()
+    transcription: string | null;
+
+    @Expose()
+    trackingNumber: string | null;
+    
+    @Type(() => MarketingSourceBriefDto)
+    @Expose()
+    marketingSource?: MarketingSourceBriefDto | null;
+}
