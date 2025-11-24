@@ -24,6 +24,8 @@ export class RecordingWorkflowService {
     async ensureProcessed(callSid: string, recordingUrlBase: string) { // processRecordingPipeline
         this.logger.debug('ensureProcessed started .... ' + callSid);
 
+        if (!recordingUrlBase) return;
+
         let log = await this.callLogs.findOneBySid(callSid);
         if (!log) {
             this.logger.warn(`Call log not found for ${callSid}`);
@@ -44,6 +46,7 @@ export class RecordingWorkflowService {
                 return; // stop here; retry later
             }
         }
+
 
         // 2) Transcript — use URL
         let transcript = log.transcriptText;

@@ -19,7 +19,6 @@ export class SearchCallLogsQueryDto extends PaginationQueryDto {
     @IsUUID()
     marketingSourceId?: string;
 
-
     @TrimOrUndefined()
     @IsOptional()
     @IsISO8601()

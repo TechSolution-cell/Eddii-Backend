@@ -185,23 +185,26 @@ export class TwilioController {
         if (recordingStatus && recordingStatus !== 'completed') return 'OK';
 
         // Persist the raw URL first (handy for debugging)
-        await this.callLogs.updateBySid({
-            twilioCallSid: callSid,
-            recordingUrl: recordingUrlBase,
-        });
+        if (recordingUrlBase) {
+            await this.callLogs.updateBySid({
+                twilioCallSid: callSid,
+                recordingUrl: recordingUrlBase,
+            });
 
-        // Kick off async processing (idempotent jobId helps with Twilio retries)
-        // await this.queue.add(
-        //     JOB_ENSURE_PROCESSED,
-        //     { callSid, recordingUrlBase },
-        //     {
-        //         attempts: 2,
-        //         backoff: { type: 'exponential', delay: 30_000 },
-        //         removeOnComplete: { age: 3600, count: 1000 },
-        //         removeOnFail: 200,
-        //         jobId: `ensure-${callSid}`, // idempotent across Twilio retries
-        //     },
-        // );
+            // Kick off async processing (idempotent jobId helps with Twilio retries)
+            // await this.queue.add(
+            //     JOB_ENSURE_PROCESSED,
+            //     { callSid, recordingUrlBase },
+            //     {
+            //         attempts: 2,
+            //         backoff: { type: 'exponential', delay: 30_000 },
+            //         removeOnComplete: { age: 3600, count: 1000 },
+            //         removeOnFail: 200,
+            //         jobId: `ensure-${callSid}`, // idempotent across Twilio retries
+            //     },
+            // );
+        }
+
 
         // Option 1: fire-and-forget (fast webhook). Log errors inside service.
         // this.workflow.ensureProcessed(callSid, recordingUrlBase);

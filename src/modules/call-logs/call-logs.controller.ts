@@ -34,21 +34,49 @@ export class CallLogsController {
     }
 
     @Get(':id/recording')
-    async getRecording(
-        @Param('id') id: string,
-        @Res() res: Response,
-        @Headers('range') range?: string,
-        @Headers('if-none-match') ifNoneMatch?: string,
-        @Headers('if-modified-since') ifModifiedSince?: string,
-    ) {
+    async getRecording(@Param('id') id: string): Promise<{ url: string }> {
         const log = await this.svc.findById(id);
 
-        if (log.recordingObjectKey) {
-            const preSignedUrl = await this.mediaIngestService.getPresignedReadUrl(log.recordingObjectKey)
-            res.setHeader('Cache-Control', 'no-store');
-            return res.redirect(302, preSignedUrl);
-        } else {
+        if (!log) {
+            throw new NotFoundException('Call log not found');
+        }
+
+        if (!log.recordingObjectKey) {
             throw new NotFoundException('Recording not available yet');
         }
+
+        try {
+            const preSignedUrl = await this.mediaIngestService.getPresignedReadUrl(
+                log.recordingObjectKey,
+            );
+
+            return { url: preSignedUrl };
+        } catch (err) {
+            // optionally log err here
+            throw new NotFoundException('Failed to get a recording url');
+        }
     }
+
+    // @Get(':id/recording')
+    // async getRecording(
+    //     @Param('id') id: string,
+    //     @Res() res: Response,
+    //     @Headers('range') range?: string,
+    //     @Headers('if-none-match') ifNoneMatch?: string,
+    //     @Headers('if-modified-since') ifModifiedSince?: string,
+    // ) {
+    //     const log = await this.svc.findById(id);
+
+    //     console.log('recording', log);
+
+    //     if (log.recordingObjectKey) {
+    //         const preSignedUrl = await this.mediaIngestService.getPresignedReadUrl(log.recordingObjectKey);
+
+    //         console.log(preSignedUrl);
+    //         res.setHeader('Cache-Control', 'no-store');
+    //         return res.redirect(302, preSignedUrl);
+    //     } else {
+    //         throw new NotFoundException('Recording not available yet');
+    //     }
+    // }
 }

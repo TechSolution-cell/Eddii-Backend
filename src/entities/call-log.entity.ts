@@ -139,7 +139,7 @@ export class CallLog {
     name: 'intent',
     type: 'enum',
     enum: CallIntent,
-    nullable: true,
+    default: CallIntent.None
   })
   intent?: CallIntent;
 

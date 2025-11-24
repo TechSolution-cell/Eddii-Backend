@@ -38,7 +38,7 @@ export class TranscriptionService {
         utterances: Array<{ start: number; end: number; transcript: string; speaker?: number }>,
         opts?: { maxSilenceGapSec?: number; maxTurnChars?: number }
     ): Turn[] {
-        const maxSilenceGapSec = opts?.maxSilenceGapSec ?? 1.5; // merge if gap <= 1.5s
+        const maxSilenceGapSec = opts?.maxSilenceGapSec ?? 7.5; // merge if gap <= 7.5
         const maxTurnChars = opts?.maxTurnChars ?? 800;         // prevent giant turns
 
         if (!utterances?.length) return [];

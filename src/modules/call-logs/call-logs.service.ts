@@ -15,7 +15,7 @@ import { handleDbError, Paginated, PgQueryError } from 'src/common/utils';
 // ── Domain (Entities/Repositories/Enums)  ──────────────────────────────────────────────────────────
 import { CallLog } from '../../entities/call-log.entity';
 
-import { CallLogSortBy } from 'src/common/enums/telephony.enum';
+import { CallIntent, CallLogSortBy, CallResult } from 'src/common/enums/telephony.enum';
 import { SortOrder } from 'src/common/enums';
 import { CallStatus } from 'src/common/enums/telephony.enum';
 
@@ -124,9 +124,9 @@ export class CallLogsService {
                     'cl.trackingNumber',
                     'tn'
                 )
-                .orderBy(`cl.${sortBy}`, sortOrder)
-                .skip((page - 1) * limit)
-                .take(limit);
+                // .orderBy(`cl.${sortBy}`, sortOrder)
+                // .skip((page - 1) * limit)
+                // .take(limit);
 
 
             // mareketingSourceId
@@ -140,6 +140,7 @@ export class CallLogsService {
 
             const cntRow = await qb
                 .clone()
+                .orderBy()
                 .select('COUNT(DISTINCT cl.id)', 'cnt')
                 .getRawOne<{ cnt: string }>();
             const total = Number(cntRow?.cnt ?? 0);
@@ -154,7 +155,11 @@ export class CallLogsService {
                     'cl.status AS "status"',
                     'cl.call_started_at AS "callStartedAt"',
                     'cl.duration_seconds AS "durationSeconds"',
-                    'cl.transcription AS "transcription"',
+                    'cl.result AS "result"',
+                    'cl.sentiment AS "sentiment"',
+                    'cl.intent AS "intent"',
+                    'cl.transcript_json AS "transcriptJson"',
+                    'cl.recording_url AS "recordingUrl"',
                     'ms.id AS "marketingSourceId"',
                     'ms.name AS "marketingSourceName"',
                     'ms.description AS "marketingSourceDescription"',
@@ -162,6 +167,9 @@ export class CallLogsService {
                     'ms.campaign_name AS "marketingSourceCampaignName"',
                     'tn.number AS "trackingNumber"',
                 ])
+                .orderBy(`cl.${sortBy}`, sortOrder)
+                .skip((page - 1) * limit)
+                .take(limit)
                 .getRawMany<{
                     id: string;
                     callerNumber: string;
@@ -169,7 +177,11 @@ export class CallLogsService {
                     status: CallStatus;
                     callStartedAt: Date;
                     durationSeconds: number;
-                    transcription: string | null;
+                    result: CallResult,
+                    sentiment: number | null,
+                    intent: CallIntent,
+                    transcriptJson: string | null;
+                    recordingUrl: string | null;
                     marketingSourceId: string;
                     marketingSourceName: string;
                     marketingSourceDescription: string | null;
@@ -185,7 +197,11 @@ export class CallLogsService {
                 status: r.status,
                 callStartedAt: r.callStartedAt,
                 durationSeconds: r.durationSeconds,
-                transcription: r.transcription,
+                result: r.result,
+                sentiment: r.sentiment,
+                intent: r.intent,
+                transcriptJson: r.transcriptJson,
+                recordingUrl: r.recordingUrl,
                 trackingNumber: r.trackingNumber,
                 marketingSource: {
                     id: r.marketingSourceId,
@@ -211,29 +227,6 @@ export class CallLogsService {
             handleDbError(err as PgQueryError, 'Cannot load call logs');
         }
     }
-
-    /**
-     * Find all call logs for a business, newest first.
-     * Optional pagination via limit/offset; sane defaults if omitted.
-   */
-    // async findAll(
-    //     businessId: string,
-    //     opts?: { limit?: number; offset?: number }
-    // ) {
-    //     if (!businessId) {
-    //         throw new BadRequestException('businessId is required');
-    //     }
-
-    //     const limit = Math.min(Math.max(opts?.limit ?? 50, 1), 200); // clamp 1..200
-    //     const offset = Math.max(opts?.offset ?? 0, 0);
-
-    //     return this.repo.find({
-    //         // where: { businessId },
-    //         order: { createdAt: 'DESC' },
-    //         take: limit,
-    //         skip: offset,
-    //     });
-    // }
 
     /**
      * Fetch a call log by its primary id. Returns null if not found.

@@ -1,5 +1,5 @@
 import { Expose, Type } from 'class-transformer';
-import { CallStatus } from 'src/common/enums/telephony.enum';
+import { CallIntent, CallResult, CallStatus } from 'src/common/enums/telephony.enum';
 
 export class MarketingSourceBriefDto {
     @Expose()
@@ -34,16 +34,28 @@ export class CallLogReponseDto {
 
     @Expose()
     callStartedAt: Date;
-    
+
     @Expose()
     durationSeconds: number;
 
     @Expose()
-    transcription: string | null;
+    result: CallResult;
+
+    @Expose()
+    intent: CallIntent;
+
+    @Expose()
+    sentiment: number | null;
+
+    @Expose()
+    transcriptJson: string | null;
+
+    @Expose()
+    recordingUrl: string | null;
 
     @Expose()
     trackingNumber: string | null;
-    
+
     @Type(() => MarketingSourceBriefDto)
     @Expose()
     marketingSource?: MarketingSourceBriefDto | null;
