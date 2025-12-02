@@ -1,13 +1,21 @@
-import { Controller, Post, UseGuards, Request, Body, UnauthorizedException } from '@nestjs/common';
+import {
+    Controller, Post, UseGuards, Request,
+    Body, Logger
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { AuthService } from './auth.service';
-import { RefreshDto } from './dto/refresh.dto';
+
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+
+import { AuthService } from './auth.service';
+
+import { RefreshDto } from './dto/refresh.dto';
 import { LoginDto } from './dto/login.dto';
 
 @Controller('auth')
 export class AuthController {
     constructor(private readonly auth: AuthService) { }
+
+    private readonly logger = new Logger(AuthController.name);
 
     @UseGuards(AuthGuard('local'))
     @Post('login')
@@ -15,18 +23,13 @@ export class AuthController {
         @Request() req: any,
         @Body() _dto: LoginDto
     ) {
-        // const user = await this.auth.validateUser(dto.email, dto.password);
-        // if (!user) throw new UnauthorizedException('Invalid credentials');
-
-        // returns { access_token, refresh_token }
         return this.auth.issueTokenPair(req.user, !!_dto.rememberMe);
-        // return this.auth.sign(req.user);
     }
 
     // Accept refresh token in body.
     @Post('refresh')
-    async refresh(@Body() dto: RefreshDto) {
-        console.log('refresh');
+    async refresh(
+        @Body() dto: RefreshDto) {
         return this.auth.refreshTokens(dto.refreshToken);
     }
 

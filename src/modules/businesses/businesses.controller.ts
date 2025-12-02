@@ -6,7 +6,6 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { AccountRole } from 'src/common/enums';
-import { PaginationQueryDto } from 'src/common/dto';
 import { SearchBusinessesQueryDto } from './dto/search-businesses.query.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)

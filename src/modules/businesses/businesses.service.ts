@@ -19,7 +19,7 @@ import { SortOrder, BusinessSortBy } from 'src/common/enums';
 import { BusinessResponseDto, CreateBusinessDto, UpdateBusinessDto } from './dto';
 
 // ── Local/feature utilities  ──────────────────────────────────────────────────────────
-import { hashPassword } from '../auth/password.util';
+import { hashPassword } from '../auth/utils/password.util';
 import { BusinessStatus } from 'src/common/enums';
 import { SearchBusinessesQueryDto } from './dto/search-businesses.query.dto';
 
