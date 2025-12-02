@@ -9,6 +9,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 // ──  App modules/services/providers  ────────────────────────────────────────────────────
 import { RecordingsModule } from '../recordings/recordings.module';
 import { CallLogsModule } from '../call-logs/call-logs.module';
+import { AnalyticsModule } from '../analytics/analytics.module';
 import { TwilioService } from './twilio.service';
 import { TwilioController } from './twilio.controller';
 
@@ -25,7 +26,8 @@ import { NumberRoute } from 'src/entities/number-route.entity';
         // }),
         TypeOrmModule.forFeature([TrackingNumber, CallLog, NumberRoute]),
         RecordingsModule,
-        CallLogsModule
+        CallLogsModule,
+        AnalyticsModule
     ],
     providers: [TwilioService],
     controllers: [TwilioController],

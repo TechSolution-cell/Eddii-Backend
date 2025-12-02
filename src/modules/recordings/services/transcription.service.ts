@@ -145,12 +145,13 @@ export class TranscriptionService {
                     diarize: true,
                     punctuate: true,
                     utterances: true,
+                    detect_language: true
                 }
             );
 
             const utterances = dgResp?.results?.utterances ?? [];
             return this.summarize(utterances as any, {
-                language: 'en',
+                language: dgResp?.results.channels[0].detected_language ?? 'en',
                 duration: dgResp?.metadata?.duration ?? null,
             });
         } catch (err) {

@@ -17,6 +17,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 // ── App modules/services/providers  ─────────────────────────────────────────────
 import { TwilioService } from './twilio.service';
 import { CallLogsService } from '../call-logs/call-logs.service';
+import { HourlyRollupService } from '../analytics/services/hourly-rollup.service';
 
 // ── Domain (Entities/Repositories/Enums)  ────────────────────────────────────────────────────
 import { TrackingNumber } from 'src/entities/tracking-number.entity';
@@ -30,6 +31,7 @@ export class TwilioController {
     constructor(
         private readonly twilio: TwilioService,
         private readonly callLogs: CallLogsService,
+        private readonly hourlyRollupService: HourlyRollupService,
         // @InjectQueue(RECORDING_WORKFLOW_QUEUE) private readonly queue: Queue<EnsureProcessedJob>,
         @InjectRepository(TrackingNumber) private readonly tnRepo: Repository<TrackingNumber>,
         @InjectRepository(NumberRoute) private readonly nrRepo: Repository<NumberRoute>
@@ -102,7 +104,7 @@ export class TwilioController {
             // 3) Create a call log
             await this.callLogs.createBySid({
                 twilioCallSid: callSid,
-                // businessId: tn.businessId,
+                businessId: tn.businessId,
                 marketingSourceId: tn.marketingSourceId,
                 trackingNumberId: tn.id,
                 callerNumber: from,
@@ -156,11 +158,16 @@ export class TwilioController {
             : CallStatus.Unknown;
         const duration = body.CallDuration ? parseInt(body.CallDuration, 10) : undefined;
 
-        await this.callLogs.updateBySid({
+        const saved = await this.callLogs.updateBySid({
             twilioCallSid: callSid,
             status,
             durationSeconds: Number.isFinite(duration) ? duration : undefined,
         });
+
+        // Once the call is fully completed, update our materialized hourly rollup.
+        if (status === CallStatus.Completed) {
+            void this.hourlyRollupService.incrementFromCallLog(saved);
+        }
 
         return 'OK';
     }

@@ -30,6 +30,15 @@ export class Business {
   @Index({ unique: true })
   @Column({ name: 'business_name', type: 'varchar', length: 255, default: '' })
   businessName: string;
+  
+  @Column({
+    name: 'timezone',
+    type: 'varchar',
+    length: 64,
+    default: 'UTC',
+  })
+  timezone: string;
+
 
   @Column({ name: 'max_tracking_numbers', type: 'int', default: 10 })
   maxTrackingNumbers: number;
@@ -61,8 +70,8 @@ export class Business {
   @OneToMany(() => TrackingNumber, (ct) => ct.business)
   trackingNumbers: TrackingNumber[];
 
-  // @OneToMany(() => CallLog, (cl) => cl.business)
-  // callLogs: CallLog[];
+  @OneToMany(() => CallLog, (cl) => cl.business)
+  callLogs: CallLog[];
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz', precision: 3 })
   createdAt: Date;

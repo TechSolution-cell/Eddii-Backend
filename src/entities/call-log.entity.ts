@@ -11,12 +11,12 @@ import { TrackingNumber } from './tracking-number.entity';
 
 import { TranscriptionSummary, Turn } from 'src/modules/recordings/services/transcription.service';
 
-export enum RecordingStorageProvider {
-  None = 'none',
-  S3 = 's3',
-  GCS = 'gcs',
-  Azure = 'azure',
-}
+// export enum RecordingStorageProvider {
+//   None = 'none',
+//   S3 = 's3',
+//   GCS = 'gcs',
+//   Azure = 'azure',
+// }
 
 
 @Entity('call_logs')
@@ -25,6 +25,7 @@ export enum RecordingStorageProvider {
 //   CREATE INDEX IF NOT EXISTS idx_cl_msid_startedat_id_desc
 //   ON call_logs (marketing_source_id ASC, call_started_at DESC, id DESC);
 // `);
+@Index(['businessId', 'callStartedAt', 'id'])
 @Index(['callStartedAt', 'id'])
 // CREATE INDEX idx_cl_startedat_id_desc
 //   ON call_logs (call_started_at DESC, id DESC);
@@ -34,9 +35,9 @@ export class CallLog {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  // @Index()
-  // @Column({ name: 'business_id', type: 'uuid' })
-  // businessId: string;
+  @Index()
+  @Column({ name: 'business_id', type: 'uuid' })
+  readonly businessId: string;
 
   @Column({ name: 'marketing_source_id', type: 'uuid', nullable: true })
   readonly marketingSourceId: string | null;
@@ -46,8 +47,9 @@ export class CallLog {
   readonly trackingNumberId: string;
 
   /* ---------- Relations ---------- */
-  // @ManyToOne(() => Business, (b) => b.callLogs, { onDelete: 'CASCADE' })
-  // business: Business;
+  @ManyToOne(() => Business, (b) => b.callLogs, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'business_id' })
+  business: Business;
 
   @ManyToOne(() => TrackingNumber, (tn) => tn.callLogs, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'tracking_number_id' })
@@ -84,7 +86,7 @@ export class CallLog {
   @Column({ name: 'call_started_at', type: 'timestamptz', nullable: true })
   callStartedAt?: Date;
 
-  @Column({ name: 'duration_seconds', type: 'int', nullable: true })
+  @Column({ name: 'duration_seconds', type: 'int', default: 0 })
   durationSeconds?: number;
 
   /* ---------- Media / Transcript ---------- */
