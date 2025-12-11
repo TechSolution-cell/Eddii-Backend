@@ -31,8 +31,8 @@ import { MarketingSource } from '../entities/marketing-source.entity';
 import { NumberRoute } from '../entities/number-route.entity';
 import { TrackingNumber } from '../entities/tracking-number.entity';
 import { CallLog } from '../entities/call-log.entity';
-import { CallAnalyticsHourly } from 'src/entities/call-analytics-hourly.entity';
-
+import { CallVolumeHourly } from 'src/entities/call-volume-hourly.entity';
+import { CallDepartmentHourlyKpi } from 'src/entities/call-department-hourly-kpi.entity';
 
 @Module({
   imports: [
@@ -48,7 +48,7 @@ import { CallAnalyticsHourly } from 'src/entities/call-analytics-hourly.entity';
         username: cfg.dbUser,
         password: cfg.dbPass,
         database: cfg.dbName,
-        entities: [Business, MarketingSource, CallLog, NumberRoute, TrackingNumber, CallAnalyticsHourly],
+        entities: [Business, MarketingSource, CallLog, NumberRoute, TrackingNumber, CallVolumeHourly, CallDepartmentHourlyKpi],
         synchronize: true, // use migrations in prod; set true in dev if needed
         logging: cfg.isDev,
         ssl: false

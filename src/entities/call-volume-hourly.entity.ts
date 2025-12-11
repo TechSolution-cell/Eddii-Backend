@@ -8,14 +8,14 @@ import {
     UpdateDateColumn,
 } from 'typeorm';
 
-@Entity('call_analytics_hourly')
+@Entity('call_volume_hourly')
 @Index(['businessId', 'bucketStartUtc'])
 @Index(['businessId', 'marketingSourceId', 'bucketStartUtc'])
 @Unique(
-    'uq_call_analytics_hourly_business_source_bucket',
+    'uq_call_volume_hourly_business_source_bucket',
     ['businessId', 'marketingSourceId', 'bucketStartUtc'],
 )
-export class CallAnalyticsHourly {
+export class CallVolumeHourly {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 

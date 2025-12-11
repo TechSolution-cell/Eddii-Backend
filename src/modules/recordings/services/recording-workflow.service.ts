@@ -1,9 +1,13 @@
+
+// ── Framework & Lib  ──────────────────────────────────────────────────────────
 import { Injectable, Logger } from '@nestjs/common';
 
+// ── App modules/services/providers  ─────────────────────────────────────────────
 import { MediaIngestService } from './media-ingest.service';
 import { TranscriptionService, TranscriptionSummary } from './transcription.service';
 import { AnalysisService } from './analysis.service';
 import { CallLogsService } from 'src/modules/call-logs/call-logs.service';
+import { HourlyRollupService } from 'src/modules/analytics/services/hourly-rollup.service';
 
 @Injectable()
 export class RecordingWorkflowService {
@@ -14,6 +18,7 @@ export class RecordingWorkflowService {
         private readonly transcription: TranscriptionService,
         private readonly analysis: AnalysisService,
         private readonly callLogs: CallLogsService,
+        private readonly hourlyRollupService: HourlyRollupService,
     ) { }
 
     /**
@@ -81,20 +86,27 @@ export class RecordingWorkflowService {
         // 3) LLM analysis
         log = await this.callLogs.findOneBySid(callSid);  // Get a fresh log.
         const needsIntent = !log?.intent;
-        const needsSentiment = log?.sentiment == null;
         const needsResult = !log?.result || log.result === 'none';
+        const needsDepartment = !log?.department || log.department === 'none';
+        const needsSentiment = log?.sentiment == null;
 
-        if (needsIntent || needsSentiment || needsResult) {
+        if (needsIntent || needsSentiment || needsResult || needsDepartment) {
             try {
                 const analysis = await this.analysis.classifyConversation(summary?.turns ?? []);
                 if (!analysis) return;
-                const { intent, sentiment, result } = analysis;
-                await this.callLogs.updateBySid({
+                const { intent, sentiment, department, result } = analysis;
+                const saved = await this.callLogs.updateBySid({
                     twilioCallSid: callSid,
                     intent: intent ?? log?.intent,
-                    sentiment: sentiment ?? log?.sentiment,
                     result: result ?? log?.result,
+                    department: department ?? log?.department,
+                    sentiment: sentiment ?? log?.sentiment,
                 });
+
+                // Update hourly aggregates (volume + department KPIs) now that
+                // the call has final intent/result/department/sentiment.
+                await this.hourlyRollupService.updateDepartmentKpisFromCallLog(saved);
+
             } catch (err) {
                 this.logger.error(`Analysis failed for ${callSid}: ${err}`);
                 // not fatal; will retry

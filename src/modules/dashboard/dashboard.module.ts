@@ -3,15 +3,18 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { DashboardController } from './dashboard.controller';
-import { DashboardService } from './dashboard.service';
+import { DashboardService } from './services/dashboard.service';
 
 import { Business } from 'src/entities/business.entity';
-import { CallAnalyticsHourly } from 'src/entities/call-analytics-hourly.entity';
+import { CallVolumeHourly } from 'src/entities/call-volume-hourly.entity';
+import { CallDepartmentHourlyKpi } from 'src/entities/call-department-hourly-kpi.entity';
+import { DashboardSummaryService } from './services/dashboard-summary.service';
+import { DashboardChartService } from './services/dashboard-chart.service';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Business, CallAnalyticsHourly])],
+    imports: [TypeOrmModule.forFeature([Business, CallVolumeHourly, CallDepartmentHourlyKpi])],
     controllers: [DashboardController],
-    providers: [DashboardService],
+    providers: [DashboardService, DashboardSummaryService, DashboardChartService],
     exports: [DashboardService],
 })
 export class DashboardModule { }

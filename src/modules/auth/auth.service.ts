@@ -4,7 +4,7 @@ import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 
-import { comparePassword, hashPassword } from './utils/password.util';
+import { comparePassword } from './utils/password.util';
 import { hashToken, compareToken } from './utils/token-hash.util';
 
 import { ConfigService } from '../../config/config.service';
@@ -38,10 +38,10 @@ export class AuthService {
             this.signRefreshToken(user, rememberMe),
         ]);
         await this.setRefreshToken(user.id, refresh);
-        this.logger.debug({
-            access_token: access,
-            refresh_token: refresh
-        });
+        // this.logger.debug({
+        //     access_token: access,
+        //     refresh_token: refresh
+        // });
         return {
             access_token: access,
             refresh_token: refresh
@@ -50,7 +50,7 @@ export class AuthService {
 
     /** Verify + rotate refresh token */
     async refreshTokens(refreshToken: string) {
-        this.logger.debug('refresh token');
+        // this.logger.debug('refresh token');
 
         let decoded: JwtPayload;
         try {
@@ -60,7 +60,7 @@ export class AuthService {
             });
         } catch (e: any) {
             if (e instanceof TokenExpiredError || e?.name === 'TokenExpiredError') {
-                this.logger.error('refresh_token_expired');
+                // this.logger.error('refresh_token_expired');
                 throw new UnauthorizedException({
                     code: 'refresh_token_expired',
                     message: 'Refresh token has expired. Please sign in again.',
@@ -83,10 +83,10 @@ export class AuthService {
         }
 
         // verify it matches the last stored token (revocation support)
-        this.logger.debug(refreshToken, user.refreshTokenHash);
+        // this.logger.debug(refreshToken, user.refreshTokenHash);
         const ok = await compareToken(refreshToken, user.refreshTokenHash);
         if (!ok) {
-            this.logger.error('refresh_token does not match with hashed refresh_token');
+            // this.logger.error('refresh_token does not match with hashed refresh_token');
             throw new UnauthorizedException({
                 code: 'invalid_refresh_token',
                 message: 'Refresh token is invalid.',
@@ -131,17 +131,4 @@ export class AuthService {
         await this.clearRefreshToken(userId);
         return { success: true };
     }
-
-    // async sign(user: Business) {
-    //     const payload = {
-    //         sub: user.id,
-    //         email: user.email,
-    //         role: user.accountRole as AccountRole,
-    //     };
-    //     return {
-    //         businessId: user.id,
-    //         role: user.accountRole,
-    //         accessToken: await this.jwt.signAsync(payload),
-    //     };
-    // }
 }

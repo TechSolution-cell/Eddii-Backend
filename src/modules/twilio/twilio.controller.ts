@@ -22,7 +22,7 @@ import { HourlyRollupService } from '../analytics/services/hourly-rollup.service
 // ── Domain (Entities/Repositories/Enums)  ────────────────────────────────────────────────────
 import { TrackingNumber } from 'src/entities/tracking-number.entity';
 import { NumberRoute } from 'src/entities/number-route.entity';
-import { CallDirection, CallStatus } from 'src/common/enums/telephony.enum';
+import { CallDirection, CallResult, CallStatus } from 'src/common/enums/telephony.enum';
 import { NumberRouteStatus } from 'src/common/enums/phone-number.enum';
 import { TrackingNumberStatus } from 'src/common/enums/phone-number.enum';
 
@@ -158,15 +158,31 @@ export class TwilioController {
             : CallStatus.Unknown;
         const duration = body.CallDuration ? parseInt(body.CallDuration, 10) : undefined;
 
-        const saved = await this.callLogs.updateBySid({
-            twilioCallSid: callSid,
-            status,
-            durationSeconds: Number.isFinite(duration) ? duration : undefined,
-        });
+        // For calls that never connect (busy / failed / no-answer / canceled),
+        // mark them as NotConnected and update BOTH volume + KPI hourly aggregates.
+        if (status === CallStatus.Busy ||
+            status === CallStatus.Failed ||
+            status === CallStatus.NoAnswer ||
+            status === CallStatus.Canceled) {
+            const saved = await this.callLogs.updateBySid({
+                twilioCallSid: callSid,
+                status,
+                result: CallResult.NotConnected,
+                durationSeconds: Number.isFinite(duration) ? duration : 0,
+            });
 
-        // Once the call is fully completed, update our materialized hourly rollup.
+            void this.hourlyRollupService.updateHourlyAggregatesFromCallLog(saved);
+        }
+
+        // For fully completed calls, update ONLY the hourly volume rollup.
+        // (Department / result / sentiment KPIs will be rolled up later once classified.)
         if (status === CallStatus.Completed) {
-            void this.hourlyRollupService.incrementFromCallLog(saved);
+            const saved = await this.callLogs.updateBySid({
+                twilioCallSid: callSid,
+                status,
+                durationSeconds: Number.isFinite(duration) ? duration : 0,
+            });
+            void this.hourlyRollupService.updateVolumeFromCallLog(saved);
         }
 
         return 'OK';
@@ -203,7 +219,7 @@ export class TwilioController {
             //     JOB_ENSURE_PROCESSED,
             //     { callSid, recordingUrlBase },
             //     {
-            //         attempts: 2,
+            //         attempts: 3,
             //         backoff: { type: 'exponential', delay: 30_000 },
             //         removeOnComplete: { age: 3600, count: 1000 },
             //         removeOnFail: 200,

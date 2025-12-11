@@ -6,10 +6,10 @@ import {
 } from 'typeorm';
 import { Business } from './business.entity';
 import { MarketingSource } from './marketing-source.entity';
-import { CallStatus, CallIntent, CallResult, CallDirection } from 'src/common/enums/telephony.enum';
+import { CallStatus, CallIntent, CallResult, CallDirection, CallDepartment } from 'src/common/enums/telephony.enum';
 import { TrackingNumber } from './tracking-number.entity';
 
-import { TranscriptionSummary, Turn } from 'src/modules/recordings/services/transcription.service';
+import { TranscriptionSummary } from 'src/modules/recordings/services/transcription.service';
 
 // export enum RecordingStorageProvider {
 //   None = 'none',
@@ -17,7 +17,6 @@ import { TranscriptionSummary, Turn } from 'src/modules/recordings/services/tran
 //   GCS = 'gcs',
 //   Azure = 'azure',
 // }
-
 
 @Entity('call_logs')
 @Index(['marketingSourceId', 'callStartedAt', 'id'])
@@ -124,17 +123,21 @@ export class CallLog {
   /* ---------- Classification / Analytics ---------- */
   @Index()
   @Column({
+    name: 'department',
+    type: 'enum',
+    enum: CallDepartment,
+    default: CallDepartment.None,
+  })
+  department: CallDepartment;
+
+  @Index()
+  @Column({
     name: 'result',
     type: 'enum',
     enum: CallResult,
     default: CallResult.None,
   })
   result: CallResult;
-
-  // 1–5 (nullable if not scored)
-  @Index()
-  @Column({ name: 'sentiment', type: 'smallint', nullable: true })
-  sentiment?: number;
 
   @Index()
   @Column({
@@ -145,8 +148,17 @@ export class CallLog {
   })
   intent?: CallIntent;
 
+  // 1–5 (nullable if not scored)
+  @Index()
+  @Column({ name: 'sentiment', type: 'smallint', nullable: true })
+  sentiment?: number;
+
+
   /* ---------- Auditing ---------- */
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  // @Column({ name: '', type: 'timestamptz', precision: 3 }) //   rollup_processed_at or rollup_version
+  // rollupProcessedAt: Date;
+
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz', precision: 3 })
   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz', precision: 3 })
